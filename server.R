@@ -18,16 +18,23 @@ shinyServer(function(input, output, session) {
     subset(hurtos, Departamento == input$dpto_user)$Municipio %>% as.character()
   })
   
+  v <- reactiveValues(data = NULL)
+  roca1 <- sum(hurtos$Departamento == "CUNDINAMARCA")
+  mpios_cundi <- hurtos$Municipio[hurtos$Departamento == "CUNDINAMARCA"]
+
   observe(({
     lista <- c("Todos", mpio_user_lista())
     updateSelectInput(session, "mpio_user", choices = c("Todos", lista))
   }))
   
-  v <- reactiveValues(data = NULL)
-    
+  
   observeEvent(input$dpto_user, {
+    if(input$dpto_user == "CUNDINAMARCA"){
+      v$data <- roca1
+    } else {
   filtro   <- filter(hurtos, Departamento == input$dpto_user)
   v$data <- filtro %>% nrow()
+    }
   })
 
   observeEvent(input$mpio_user, {
