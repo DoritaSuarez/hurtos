@@ -48,8 +48,8 @@ shinyUI(fluidPage(
     # Show a plot of the generated distribution
     mainPanel(
       fluidRow(
-        column(width = 7,
-      div(plotlyOutput("salida", height = "600px"))))
+        column(width = 8,
+      div(plotlyOutput("salida", height = "800px"))))
     )
   )
 ))
