@@ -9,20 +9,95 @@
 
 library(shiny)
 library(dplyr)
+library(ggplot2)
+library(plotly)
 # Define server logic required to draw a histogram
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
+
+  mpio_user_lista <- reactive({
+    subset(hurtos, Departamento == input$dpto_user)$Municipio %>% as.character()
+  })
   
+  observe(({
+    lista <- c("Todos", mpio_user_lista())
+    updateSelectInput(session, "mpio_user", choices = c("Todos", lista))
+  }))
   
-  filtro <- reactive({
-    input$inp
+  v <- reactiveValues(data = NULL)
+    
+  observeEvent(input$dpto_user, {
+  filtro   <- filter(hurtos, Departamento == input$dpto_user)
+  v$data <- filtro %>% nrow()
+  })
+
+  observeEvent(input$mpio_user, {
+    f1 <- ifelse(input$mpio_user == "Todos", unique(hurtos$Municipio), input$mpio_user)
+    f2 <- ifelse(input$dpto_user == "Todos", unique(hurtos$Departamento), input$dpto_user)
+    filtro   <- filter(hurtos, Departamento %in% f2, Municipio %in% f1) 
+    v$data <- filtro %>% nrow()
+  })
+  
+  observeEvent(input$zona_user, {
+    f1 <- ifelse(input$mpio_user == "Todos", unique(hurtos$Municipio), input$mpio_user)
+    f2 <- ifelse(input$zona_user == "Todas", unique(hurtos$Zona), input$zona_user)
+    filtro   <- filter(hurtos, Municipio %in% input$mpio_user, Zona %in% f2)
+    v$data <- filtro %>% nrow()
+  })
+  
+  observeEvent(input$sexo_user, {
+    f1 <- ifelse(input$mpio_user == "Todos", unique(hurtos$Municipio), input$mpio_user)
+    f2 <- ifelse(input$zona_user == "Todas", unique(hurtos$Zona), input$zona_user)
+    f3 <- ifelse(input$sexo_user == "Todos", unique(hurtos$Sexo), input$sexo_user)
+    filtro   <- filter(hurtos, Municipio %in% input$mpio_user, Zona %in% f2, Sexo %in% f3)
+    v$data <- filtro %>% nrow()
+  })
+  
+  observeEvent(input$estado_user, {
+    f1 <- ifelse(input$mpio_user == "Todos", unique(hurtos$Municipio), input$mpio_user)
+    f2 <- ifelse(input$zona_user == "Todas", unique(hurtos$Zona), input$zona_user)
+    f3 <- ifelse(input$sexo_user == "Todos", unique(hurtos$Sexo), input$sexo_user)
+    f4 <- ifelse(input$sexo_user == "Todos", unique(hurtos$Estado.civil), input$estado_user)
+    filtro   <- filter(hurtos, Municipio %in% input$mpio_user, Zona %in% f2, Sexo %in% f3, Estado.civil %in% f4)
+    v$data <- filtro %>% nrow()
+  })
+  
+  observeEvent(input$escolaridad_user, {
+    f1 <- ifelse(input$mpio_user == "Todos", unique(hurtos$Municipio), input$mpio_user)
+    f2 <- ifelse(input$zona_user == "Todas", unique(hurtos$Zona), input$zona_user)
+    f3 <- ifelse(input$sexo_user == "Todos", unique(hurtos$Sexo), input$sexo_user)
+    f4 <- ifelse(input$sexo_user == "Todos", unique(hurtos$Estado.civil), input$estado_user)
+    f5 <- ifelse(input$escolaridad_user == "Todas", unique(hurtos$Escolaridad), input$escolaridad_user)
+    filtro   <- filter(hurtos, Municipio %in% f1, Zona %in% f2, Sexo %in% f3, Estado.civil %in% f4, Escolaridad %in% f5)
+    v$data <- filtro %>% nrow()
   })
   
   
-  hurtos <- read.csv("www/Hurto_a_personas_2018.csv", encoding = "UTF-8")
-  names(hurtos)[19] <- "cod_dane"
-  shape_dpto <- read.delim("www/shape_dptos.txt", sep = " ")
-  divipola <- read.delim("www/divipola.txt", encoding = "UTF-8")
-  poblacion <- read.delim("www/poblacion.txt", encoding = "UTF-8")
+  
+  # filtro <- eventReactive(input$go, {
+  #   ifelse(input$dpto_user!="Todos",
+  #          filter(hurtos, Departamento == input$dpto_user)%>% nrow(),
+  #          0)
+  # })
+  
+  
+  output$probabilidad <- renderText({
+    input$do
+    if(is.null(v$data))return()
+    paste("En 2018 hubo" , as.character(v$data), "hurtos con estas especificaciones")
+    })
+  
+  
+  output$proba <- renderText({
+    filtro
+  })
+  
+
+  
+# App graficos ------------------------------------------------------------
+
+  filtro <- reactive({
+    input$inp
+  })
   
   dptos <- divipola %>% group_by(cod_dpto, dpto) %>% count()
   dptos <- left_join(dptos, poblacion, by = c("dpto" = "Departamento"))
